@@ -1,0 +1,46 @@
+{
+
+  # SSL
+  email {$ADMIN_EMAIL}
+  acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+
+  # Enable to see header set by upstream
+  # debug
+}
+
+{$DOMAIN} {
+
+  redir /postgrest /postgrest/
+  redir /swagger /swagger/
+
+  handle_path /postgrest/* {
+    reverse_proxy postgrest:3000
+  }
+
+  handle_path /swagger* {
+    reverse_proxy swagger:8080
+  }
+
+  header {
+
+    # If staging acme_ca is enabled, this needs to be commented out!
+    # Otherwise, it is not possible to add exception
+    # Strict-Transport-Security "max-age=15768000; includeSubDomains; preload"
+
+  #   # More security hardening headers
+    Referrer-Policy                   "no-referrer"
+    X-Content-Type-Options            "nosniff"
+    X-Download-Options                "noopen"
+    X-Frame-Options                   "SAMEORIGIN"
+    X-Permitted-Cross-Domain-Policies "none"
+    X-Robots-Tag                      "none"
+    X-XSS-Protection                  "1; mode=block"
+    Permissions-Policy                "interest-cohort=()"
+
+    # Remove -Server header, which is an information leak
+    -Server
+
+    # Replace http with https in any Location header
+    # Location http:// https://
+  }
+}
